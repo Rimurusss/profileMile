@@ -1,21 +1,18 @@
-version: "3"
-
-services:
-nuxt:
-build: ./app/
-container_name: news-website
-restart: always
-ports:
-- "3333:3333"
-command:
-"npm run start"
-
-nginx:
-image: nginx:1.13
-container_name: news-nginx
-ports:
-- "80:80"
-volumes:
-- ./nginx:/etc/nginx/conf.d
-depends_on:
-- nuxt
+name: publish
+on: [push]
+jobs:
+publish-hello-docker-image:
+runs-on: ubuntu-latest
+steps:
+- uses: actions/checkout@v2
+- name: Login to GitHub Container Registry
+uses: docker/login-action@v1
+with:
+registry: ghcr.io
+username: ${{ github.actor }}
+password: ${{ secrets.GITHUB_TOKEN }}
+- name: Build the hello-docker Docker image
+run: |
+       docker build . --tag ghcr.io/deselikem/hello-docker-gcr-demo:latest
+       docker run ghcr.io/deselikem/hello-docker-gcr-demo:latest
+       docker push ghcr.io/deselikem/hello-docker-gcr-demo:latest
