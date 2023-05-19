@@ -1,18 +1,21 @@
-name: publish
-on: [push]
+name: Docker Publish
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
-publish-hello-docker-image:
-runs-on: ubuntu-latest
-steps:
-- uses: actions/checkout@v2
-- name: Login to GitHub Container Registry
-uses: docker/login-action@v1
-with:
-registry: ghcr.io
-username: ${{ github.actor }}
-password: ${{ secrets.GITHUB_TOKEN }}
-- name: Build the hello-docker Docker image
-run: |
-       docker build . --tag ghcr.io/deselikem/hello-docker-gcr-demo:latest
-       docker run ghcr.io/deselikem/hello-docker-gcr-demo:latest
-       docker push ghcr.io/deselikem/hello-docker-gcr-demo:latest
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Build and Publish Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./docker-compose.yml
+          push: true
+          tags: your-dockerhub-username/nuxt-app:latest
