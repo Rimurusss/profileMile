@@ -1,28 +1,21 @@
-name: Docker Publish
+version: "3"
 
-on:
-  push:
-    branches:
-      - main
+services:
+nuxt:
+build: ./app/
+container_name: news-website
+restart: always
+ports:
+- "3333:3333"
+command:
+"npm run start"
 
-jobs:
-  build-and-publish:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and Publish Docker image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./docker-compose.yml
-          push: true
-          tags: your-dockerhub-username/nuxt-app:latest
+nginx:
+image: nginx:1.13
+container_name: news-nginx
+ports:
+- "80:80"
+volumes:
+- ./nginx:/etc/nginx/conf.d
+depends_on:
+- nuxt
