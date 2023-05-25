@@ -1,25 +1,46 @@
-name: Run unit tests with Nuxt.js
+name: Build and Deploy
 
-# Sets the events which will trigger the Action
-# `push` = any "push" action to the GitHub "remote",
-# changes to any branch will be considered
-on: [push]
+on:
+  push:
+    branches:
+      - develop
+  release:
+    types:
+      - created
 
 jobs:
-  # `build` is a user-defined name for this job
-  build:
-    # Set the base environment to run the Action on
+  build-and-deploy:
     runs-on: ubuntu-latest
-    
-    # Steps to complete the job
     steps:
-    - name: Checking out code from the repository
+    - name: Checkout code
       uses: actions/checkout@v2
     
     - name: Install dependencies
       run: |
-        yarn install
+        yarn
     
-    - name: Build and test Nuxt.js app
+    - name: Build the app
       run: |
-        yarn test
+        yarn generate
+    
+    - name: Deploy to ECR and Kubernetes
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ./src/Dockerfile.lean
+        build-args: BUILDKIT_INLINE_CACHE=1
+        tags: ${{ github.repository }}:${{ github.sha }}
+    
+    - name: Push to ECR
+      uses: aws-actions/amazon-ecr-login@v1
+    
+    - name: Push to ECR repository
+      run: |
+        docker push ${{ github.repository }}:${{ github.sha }}
+    
+    - name: Rollout Kubernetes deployment
+      uses: azure/k8s-set-context@v1
+      with:
+        kubeconfig: ${{ secrets.K8S_DEV_CONFIG }}
+        version: 1.19.8
+        args: rollout restart deployment/$DEPLOYMENT_NAME
