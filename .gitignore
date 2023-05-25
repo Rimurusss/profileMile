@@ -1,6 +1,3 @@
-node_modules/
-
-.nuxt
-
-# Nuxt generate
-dist
+node_modules
+.dockerignore
+.docker
